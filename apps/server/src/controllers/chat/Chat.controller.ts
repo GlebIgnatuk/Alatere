@@ -10,6 +10,10 @@ import {
   EditChatMessageParamsSchema,
   EditChatMessageSchema,
   GetAuthorizedChatMemberSchema,
+  KickChatMemberParamsSchema,
+  LeaveGroupChatParamsSchema,
+  ListChatMembersWithInvalidPublicKeySchema,
+  ResetMyEncryptionKeyParamsSchema,
   RestoreChatMemberEncryptionKeyBodySchema,
   RestoreChatMemberEncryptionKeyParamsSchema,
   SearchChatMessagesSchema,
@@ -218,6 +222,71 @@ export class ChatController {
       userId: authenticatedUser.sub,
       memberId: params.data.memberId,
       encryptionKey: body.data.encryptionKey,
+    })
+
+    return res.status(200).json(createOkResponse(null))
+  }
+
+  static listChatMembersWithInvalidPublicKey = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = ListChatMembersWithInvalidPublicKeySchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    const members = await ChatService.listChatMembersWithInvalidPublicKey({
+      chatId: params.data.chatId,
+      userId: authenticatedUser.sub,
+    })
+
+    return res.status(200).json(createOkResponse(members))
+  }
+
+  static resetMyEncryptionKey = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = ResetMyEncryptionKeyParamsSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    await ChatService.resetChatMemberEncryptionKey({
+      chatId: params.data.chatId,
+      userId: authenticatedUser.sub,
+    })
+
+    return res.status(200).json(createOkResponse(null))
+  }
+
+  static kickGroupChatMember = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = KickChatMemberParamsSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    await ChatService.kickGroupChatMember({
+      chatId: params.data.chatId,
+      userId: authenticatedUser.sub,
+      memberId: params.data.memberId,
+    })
+
+    return res.status(200).json(createOkResponse(null))
+  }
+
+  static leaveFromGroupChat = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = LeaveGroupChatParamsSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    await ChatService.leaveFromGroupChat({
+      chatId: params.data.chatId,
+      userId: authenticatedUser.sub,
     })
 
     return res.status(200).json(createOkResponse(null))

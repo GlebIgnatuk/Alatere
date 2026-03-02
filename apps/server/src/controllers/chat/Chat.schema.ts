@@ -105,3 +105,36 @@ export const RestoreChatMemberEncryptionKeyParamsSchema = z.object({
 export const RestoreChatMemberEncryptionKeyBodySchema = z.object({
   encryptionKey: z.string(),
 })
+
+/**
+ * List Chat Members With Invalid Public Key
+ */
+
+export const ListChatMembersWithInvalidPublicKeySchema = z.object({
+  chatId: z.string(),
+})
+
+/**
+ * Reset My Encryption Key
+ */
+
+export const ResetMyEncryptionKeyParamsSchema = z.object({
+  chatId: z.string(),
+})
+
+/**
+ * Kick Chat Member
+ */
+
+export const KickChatMemberParamsSchema = z.object({
+  chatId: z.string(),
+  memberId: z.string(),
+})
+
+/**
+ * Leave Group Chat
+ */
+
+export const LeaveGroupChatParamsSchema = z.object({
+  chatId: z.string(),
+})

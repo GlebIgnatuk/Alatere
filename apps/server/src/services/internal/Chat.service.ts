@@ -85,7 +85,48 @@ export interface ChatMemberRestoreEncryptionKey {
   encryptionKey: string
 }
 
+export interface ChatMemberListWithInvalidPublicKey {
+  chatId: string
+  userId: string
+}
+
+export interface ChatMemberResetEncryptionKey {
+  chatId: string
+  userId: string
+}
+
+export interface ChatMemberKick {
+  chatId: string
+  userId: string
+  memberId: string
+}
+
+export interface ChatMemberLeave {
+  chatId: string
+  userId: string
+}
+
 export class ChatService {
+  private static validateSenderMemberOrThrow = (member?: ChatMember | null) => {
+    if (!member) {
+      throw new Error('User is not a member of the chat')
+    }
+
+    if (member.status !== 'member') {
+      throw new Error('User is not a member of the chat')
+    }
+
+    if (member.publicKey !== member.user.publicKey) {
+      throw new Error('User public key mismatch')
+    }
+
+    if (!member.encryptedKeyConsumedAt && !member.encryptedKey) {
+      throw new Error('Encryption key not consumed')
+    }
+
+    return member
+  }
+
   static createPrivateChat = async (payload: PrivateChatCreate) => {
     return await AppDataSource.transaction(async (tx) => {
       const chatRepo = tx.getRepository(Chat)
@@ -137,16 +178,18 @@ export class ChatService {
           chatMemberRepo.create({
             chatId: chat.id,
             userId: ownerUser.id,
+            publicKey: ownerUser.publicKey,
             status: 'member',
-            encryptionKey: encryptAssymmetric(symmetricKey, ownerUser.publicKey),
+            encryptedKey: encryptAssymmetric(symmetricKey, ownerUser.publicKey),
           }),
         ),
         chatMemberRepo.save(
           chatMemberRepo.create({
             chatId: chat.id,
             userId: peerUser.id,
+            publicKey: peerUser.publicKey,
             status: 'member',
-            encryptionKey: encryptAssymmetric(symmetricKey, peerUser.publicKey),
+            encryptedKey: encryptAssymmetric(symmetricKey, peerUser.publicKey),
           }),
         ),
       ])
@@ -273,16 +316,15 @@ export class ChatService {
       }
 
       const chatMembers = await chatMemberRepo.find({
-        select: ['id', 'userId', 'status'],
+        select: ['id', 'userId', 'status', 'publicKey', 'encryptedKeyConsumedAt', 'encryptedKey'],
         where: {
           chatId: payload.chatId,
         },
+        relations: ['user'],
       })
 
-      const isChatMember = chatMembers.some((cm) => cm.userId === payload.senderId && cm.status === 'member')
-      if (!isChatMember) {
-        throw new Error('User is not a member of the chat')
-      }
+      const senderMember = chatMembers.find((cm) => cm.userId === payload.senderId)
+      this.validateSenderMemberOrThrow(senderMember)
 
       if (payload.repliedToMessageId) {
         const repliedToMessage = await chatMessageRepo.findOne({
@@ -357,10 +399,8 @@ export class ChatService {
         },
       })
 
-      const isChatMember = chatMembers.some((cm) => cm.userId === payload.senderId && cm.status === 'member')
-      if (!isChatMember) {
-        throw new Error('User is not a member of the chat')
-      }
+      const senderMember = chatMembers.find((cm) => cm.userId === payload.senderId)
+      this.validateSenderMemberOrThrow(senderMember)
 
       const chatMessage = await chatMessageRepo.findOne({
         where: {
@@ -474,11 +514,11 @@ export class ChatService {
       await AppDataSource.getRepository(ChatMember).update(
         {
           id: chatMember.id,
-          encryptionKey: Not(IsNull()),
+          encryptedKey: Not(IsNull()),
         },
         {
-          encryptionKey: null,
-          encryptionKeyConsumedAt: new Date(),
+          encryptedKey: null,
+          encryptedKeyConsumedAt: new Date(),
         },
       )
     }
@@ -486,7 +526,7 @@ export class ChatService {
     return chatMember
   }
 
-  static restoreChatMemberEncryptionKey = async (payload: ChatMemberRestoreEncryptionKey) => {
+  static resetChatMemberEncryptionKey = async (payload: ChatMemberResetEncryptionKey) => {
     return await AppDataSource.transaction(async (tx) => {
       const chatMemberRepo = tx.getRepository(ChatMember)
 
@@ -506,8 +546,176 @@ export class ChatService {
           id: chatMember.id,
         },
         {
-          encryptionKey: payload.encryptionKey,
-          encryptionKeyConsumedAt: null,
+          encryptedKey: null,
+          encryptedKeyConsumedAt: null,
+        },
+      )
+    })
+  }
+
+  static restoreChatMemberEncryptionKey = async (payload: ChatMemberRestoreEncryptionKey) => {
+    return await AppDataSource.transaction(async (tx) => {
+      const chatMemberRepo = tx.getRepository(ChatMember)
+
+      const callerMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          userId: payload.userId,
+        },
+      })
+      if (!callerMember) {
+        throw new Error('User is not a member of the chat')
+      }
+
+      const targetMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          id: payload.memberId,
+        },
+        relations: ['user'],
+      })
+      if (!targetMember) {
+        throw new Error('Member not found')
+      }
+
+      if (callerMember.id === targetMember.id) {
+        throw new Error('Cannot restore own encryption key')
+      }
+
+      await chatMemberRepo.update(
+        {
+          id: targetMember.id,
+        },
+        {
+          publicKey: targetMember.user.publicKey,
+          encryptedKey: payload.encryptionKey,
+          encryptedKeyConsumedAt: null,
+        },
+      )
+    })
+  }
+
+  static listChatMembersWithInvalidPublicKey = async (payload: ChatMemberListWithInvalidPublicKey) => {
+    const chatMemberRepo = AppDataSource.getRepository(ChatMember)
+
+    const isChatMember = await chatMemberRepo.findOne({
+      select: ['id'],
+      where: {
+        chatId: payload.chatId,
+        userId: payload.userId,
+      },
+    })
+    if (!isChatMember) {
+      throw new Error('User is not a member of the chat')
+    }
+
+    const items = await chatMemberRepo
+      .createQueryBuilder('chatMember')
+      .innerJoinAndSelect('chatMember.user', 'user')
+      .where('chatMember.chatId = :chatId', { chatId: payload.chatId })
+      .andWhere(
+        'chatMember.publicKey != user.publicKey OR (chatMember.encryptedKeyConsumedAt IS NULL AND chatMember.encryptedKey IS NULL)',
+      )
+      .getMany()
+
+    return items
+  }
+
+  static kickGroupChatMember = async (payload: ChatMemberKick) => {
+    return await AppDataSource.transaction(async (tx) => {
+      const chatMemberRepo = tx.getRepository(ChatMember)
+
+      const chat = await tx.getRepository(Chat).findOne({
+        select: ['id', 'type'],
+        where: {
+          id: payload.chatId,
+          type: 'group',
+        },
+      })
+      if (!chat) {
+        throw new Error('Chat not found')
+      }
+
+      const chatMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          userId: payload.userId,
+        },
+      })
+      if (!chatMember) {
+        throw new Error('User is not a member of the chat')
+      }
+
+      if (chat.createdById !== chatMember.userId) {
+        throw new Error('User is not the owner of the chat')
+      }
+
+      const targetMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          id: payload.memberId,
+        },
+      })
+      if (!targetMember) {
+        throw new Error('Member not found')
+      }
+
+      if (chatMember.userId === targetMember.userId) {
+        throw new Error('Cannot kick self')
+      }
+
+      if (targetMember.status !== 'member') {
+        throw new Error('Member is not a member of the chat')
+      }
+
+      await chatMemberRepo.update(
+        {
+          id: targetMember.id,
+        },
+        {
+          status: 'kicked',
+        },
+      )
+    })
+  }
+
+  static leaveFromGroupChat = async (payload: ChatMemberLeave) => {
+    return await AppDataSource.transaction(async (tx) => {
+      const chatMemberRepo = tx.getRepository(ChatMember)
+
+      const chat = await tx.getRepository(Chat).findOne({
+        select: ['id', 'type'],
+        where: {
+          id: payload.chatId,
+          type: 'group',
+        },
+      })
+      if (!chat) {
+        throw new Error('Chat not found')
+      }
+
+      const chatMember = await chatMemberRepo.findOne({
+        select: ['id'],
+        where: {
+          chatId: payload.chatId,
+          userId: payload.userId,
+          status: 'member',
+        },
+      })
+      if (!chatMember) {
+        throw new Error('User is not a member of the chat')
+      }
+
+      await chatMemberRepo.update(
+        {
+          id: chatMember.id,
+        },
+        {
+          status: 'left',
         },
       )
     })

@@ -14,11 +14,16 @@ export class ChatMember {
   @Column({ type: 'bigint' })
   userId!: string
 
+  // Assymmetric public key
+  @Column({ type: 'text' })
+  publicKey!: string
+
+  // Encrypted symmetric key
   @Column({ type: 'text', nullable: true })
-  encryptionKey!: string | null
+  encryptedKey!: string | null
 
   @Column({ type: 'text' })
-  status!: 'member' | 'left'
+  status!: 'member' | 'left' | 'kicked'
 
   @Column({ type: 'timestamptz', nullable: true })
   lastReadMessageTimestamp!: Date | null
@@ -27,7 +32,7 @@ export class ChatMember {
   unreadMessageCount!: number
 
   @Column({ type: 'timestamptz', nullable: true })
-  encryptionKeyConsumedAt!: Date | null
+  encryptedKeyConsumedAt!: Date | null
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date

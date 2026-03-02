@@ -12,10 +12,14 @@ router.get('/v1/chats/:chatId/messages', jwtMiddleware, ChatController.searchMes
 router.patch('/v1/chats/:chatId/messages/:messageId', jwtMiddleware, ChatController.editMessage)
 router.delete('/v1/chats/:chatId/messages/:messageId', jwtMiddleware, ChatController.deleteMessage)
 router.get('/v1/chats/:chatId/members/me', jwtMiddleware, ChatController.getAuthorizedChatMember)
+router.get('/v1/chats/:chatId/invalid-members', jwtMiddleware, ChatController.listChatMembersWithInvalidPublicKey)
 router.post(
   '/v1/chats/:chatId/members/:memberId/encryption-keys',
   jwtMiddleware,
   ChatController.restoreChatMemberEncryptionKey,
 )
+router.post('/v1/chats/:chatId/members/me/encryption-key-resets', jwtMiddleware, ChatController.resetMyEncryptionKey)
+router.post('/v1/chats/:chatId/members/:memberId/kicks', jwtMiddleware, ChatController.kickGroupChatMember)
+router.post('/v1/chats/:chatId/members/me/leaves', jwtMiddleware, ChatController.leaveFromGroupChat)
 
 export { router as ChatRouter }
