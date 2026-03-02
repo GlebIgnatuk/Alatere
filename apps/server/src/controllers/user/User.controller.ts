@@ -1,5 +1,10 @@
 import { Request, Response } from 'express'
-import { CreateUserFromCodeSchema, ExchangeUserActivationCodeSchema, SearchUsernamesSchema } from './User.schema'
+import {
+  CreateUserFromCodeSchema,
+  ExchangeUserActivationCodeSchema,
+  SearchUsernamesSchema,
+  UpdateMeSchema,
+} from './User.schema'
 import { createNotFoundError, createOkResponse, createZodErrorResponse } from '@/utils/http/response'
 import { UserService } from '@/services/internal/User.service'
 import { toCreatedUserFromCodeDto } from './User.dto'
@@ -53,6 +58,29 @@ export class UserController {
     if (!user) {
       return res.status(404).json(createNotFoundError())
     }
+
+    return res.status(200).json(
+      createOkResponse({
+        id: user.id,
+        username: user.username,
+        publicKey: user.publicKey,
+      }),
+    )
+  }
+
+  static updateMe = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const body = UpdateMeSchema.safeParse(req.body)
+    if (!body.success) {
+      return res.status(422).json(createZodErrorResponse(body.error.issues))
+    }
+
+    const user = await UserService.updateUser({
+      id: authenticatedUser.sub,
+      password: body.data.password,
+      publicKey: body.data.publicKey,
+    })
 
     return res.status(200).json(
       createOkResponse({

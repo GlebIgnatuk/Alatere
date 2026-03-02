@@ -17,6 +17,13 @@ export interface UserCreate {
   code: string
 }
 
+export interface UserUpdate {
+  id: string
+
+  password?: string
+  publicKey?: string
+}
+
 export class UserService {
   static async generateUserActivationCode(payload: UserActivationCodeGenerate) {
     return await AppDataSource.transaction(async (tx) => {
@@ -105,5 +112,36 @@ export class UserService {
     })
 
     return user !== null
+  }
+
+  static async updateUser(payload: UserUpdate) {
+    return await AppDataSource.transaction(async (tx) => {
+      const userRepo = tx.getRepository(User)
+
+      const user = await userRepo.findOne({
+        where: {
+          id: payload.id,
+        },
+      })
+      if (!user) {
+        throw new Error('User not found')
+      }
+
+      if (payload.password) {
+        const hashedPassword = await argon2.hash(payload.password, {
+          type: argon2.argon2id,
+          memoryCost: 2 ** 16,
+          timeCost: 3,
+          parallelism: 1,
+        })
+        user.password = hashedPassword
+      }
+
+      if (payload.publicKey) {
+        user.publicKey = payload.publicKey
+      }
+
+      return await userRepo.save(user)
+    })
   }
 }
