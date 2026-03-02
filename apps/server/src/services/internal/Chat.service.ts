@@ -2,9 +2,11 @@ import { AppDataSource } from '@/database/DataSource'
 import { Chat } from '@/entities/Chat'
 import { ChatMember } from '@/entities/ChatMember'
 import { ChatMessage } from '@/entities/ChatMessage'
-import { EncryptedChatMessage } from '@/entities/EncryptedChatMessage'
+import { User } from '@/entities/User'
+import { encryptAssymmetric } from '@/utils/crypto/asymmetric'
+import { generateSymmetricKey } from '@/utils/crypto/symmetric'
 import { paginate, paginateWithCursor } from '@/utils/db/pagination'
-import { In } from 'typeorm'
+import { In, IsNull, Not } from 'typeorm'
 
 /**
  * Chat
@@ -44,7 +46,7 @@ export interface ChatMessageSearch {
 
 export interface TextChatMessageCreate {
   type: 'text'
-  text: { recepientId: string; text: string }[]
+  text: string
   repliedToMessageId?: string | null
 }
 
@@ -55,11 +57,7 @@ export type ChatMessageCreate = TextChatMessageCreate & {
 
 export interface TextChatMessageEdit {
   type: 'text'
-  text: { recepientId: string; text: string }[]
-}
-
-export interface TextChatMessageEdit {
-  text: { recepientId: string; text: string }[]
+  text: string
 }
 
 export type ChatMessageEdit = TextChatMessageEdit & {
@@ -72,6 +70,19 @@ export interface ChatMessageDelete {
   chatId: string
   messageId: string
   senderId: string
+}
+
+export interface ChatMemberGet {
+  chatId: string
+  userId: string
+  consumeEncryptionKey?: boolean
+}
+
+export interface ChatMemberRestoreEncryptionKey {
+  chatId: string
+  userId: string
+  memberId: string
+  encryptionKey: string
 }
 
 export class ChatService {
@@ -99,19 +110,46 @@ export class ChatService {
       })
       await chatRepo.save(chat)
 
-      const ownerMember = chatMemberRepo.create({
-        chatId: chat.id,
-        userId: payload.ownerId,
-        status: 'member',
-      })
-      await chatMemberRepo.save(ownerMember)
+      const symmetricKey = generateSymmetricKey()
 
-      const peerMember = chatMemberRepo.create({
-        chatId: chat.id,
-        userId: payload.peerId,
-        status: 'member',
-      })
-      await chatMemberRepo.save(peerMember)
+      const [ownerUser, peerUser] = await Promise.all([
+        tx.getRepository(User).findOne({
+          where: {
+            id: payload.ownerId,
+          },
+        }),
+        tx.getRepository(User).findOne({
+          where: {
+            id: payload.peerId,
+          },
+        }),
+      ])
+
+      if (!ownerUser) {
+        throw new Error('Owner user not found')
+      }
+      if (!peerUser) {
+        throw new Error('Peer user not found')
+      }
+
+      await Promise.all([
+        chatMemberRepo.save(
+          chatMemberRepo.create({
+            chatId: chat.id,
+            userId: ownerUser.id,
+            status: 'member',
+            encryptionKey: encryptAssymmetric(symmetricKey, ownerUser.publicKey),
+          }),
+        ),
+        chatMemberRepo.save(
+          chatMemberRepo.create({
+            chatId: chat.id,
+            userId: peerUser.id,
+            status: 'member',
+            encryptionKey: encryptAssymmetric(symmetricKey, peerUser.publicKey),
+          }),
+        ),
+      ])
 
       return chat
     })
@@ -125,15 +163,6 @@ export class ChatService {
       .distinctOn(['lastMessage.createdAt', 'chat.createdAt', 'chatMember.chatId'])
       .innerJoinAndSelect('chatMember.chat', 'chat')
       .leftJoinAndSelect('chat.lastMessage', 'lastMessage')
-      // Get the encrypted message for the current user only
-      .leftJoinAndSelect(
-        'lastMessage.encryptedMessages',
-        'encryptedMessages',
-        'encryptedMessages.recipientId = :userId',
-        {
-          userId: payload.userId,
-        },
-      )
       // Get the peer member of the private chat only, groups do not rely on peer
       .leftJoinAndSelect('chat.members', 'peer', 'chat.type = :type AND peer.userId != :userId', {
         type: 'private',
@@ -200,25 +229,9 @@ export class ChatService {
       .createQueryBuilder('chatMessage')
       // base message data
       .innerJoinAndSelect('chatMessage.sender', 'sender')
-      .leftJoinAndSelect(
-        'chatMessage.encryptedMessages',
-        'encryptedMessages',
-        'encryptedMessages.recipientId = :userId',
-        {
-          userId: payload.userId,
-        },
-      )
       // replied to message data
       .leftJoinAndSelect('chatMessage.repliedToMessage', 'repliedToMessage')
       .leftJoinAndSelect('repliedToMessage.sender', 'repliedToSender')
-      .leftJoinAndSelect(
-        'repliedToMessage.encryptedMessages',
-        'repliedToEncryptedMessages',
-        'repliedToEncryptedMessages.recipientId = :userId',
-        {
-          userId: payload.userId,
-        },
-      )
 
     qb.where('chatMessage.chatId = :chatId', { chatId: payload.chatId }).andWhere('sender.deletedAt IS NULL')
 
@@ -249,7 +262,6 @@ export class ChatService {
       const chatRepo = tx.getRepository(Chat)
       const chatMemberRepo = tx.getRepository(ChatMember)
       const chatMessageRepo = tx.getRepository(ChatMessage)
-      const encryptedChatMessageRepo = tx.getRepository(EncryptedChatMessage)
 
       const chat = await chatRepo.findOne({
         where: {
@@ -260,15 +272,10 @@ export class ChatService {
         throw new Error('Chat not found')
       }
 
-      if (payload.text.some((t) => t.recepientId === payload.senderId) === false) {
-        throw new Error('Sender must be a recepient')
-      }
-
       const chatMembers = await chatMemberRepo.find({
         select: ['id', 'userId', 'status'],
         where: {
           chatId: payload.chatId,
-          userId: In(payload.text.map((t) => t.recepientId)),
         },
       })
 
@@ -290,58 +297,49 @@ export class ChatService {
         }
       }
 
-      const now = new Date()
+      let chatMessage: ChatMessage
 
-      const chatMessage = await chatMessageRepo.save(
-        chatMessageRepo.create({
-          type: payload.type,
-          chatId: payload.chatId,
-          senderId: payload.senderId,
-          repliedToMessageId: payload.repliedToMessageId,
-          createdAt: now,
-        }),
-      )
+      switch (payload.type) {
+        case 'text':
+          {
+            chatMessage = await chatMessageRepo.save(
+              chatMessageRepo.create({
+                type: payload.type,
+                chatId: payload.chatId,
+                senderId: payload.senderId,
+                repliedToMessageId: payload.repliedToMessageId,
+                text: payload.text,
+                createdAt: new Date(),
+              }),
+            )
+          }
+          break
 
-      await chatRepo.update(payload.chatId, {
-        lastMessageId: chatMessage.id,
-      })
-
-      const recepientIdToTextPayload = new Map(payload.text.map((t) => [t.recepientId, t]))
-
-      for (const chatMember of chatMembers) {
-        if (chatMember.status !== 'member') {
-          continue
+        default: {
+          throw new Error('Unsupported message type')
         }
-
-        // Every recepient except the sender should have their unread message count incremented
-        if (chatMember.userId !== payload.senderId) {
-          await chatMemberRepo.update(
-            {
-              chatId: payload.chatId,
-              userId: chatMember.userId,
-            },
-            {
-              unreadMessageCount: () => 'unread_message_count + 1',
-            },
-          )
-        }
-
-        // Message contents can only be read by recepients
-        const textPayload = recepientIdToTextPayload.get(chatMember.userId)
-        if (!textPayload) {
-          continue
-        }
-
-        const encryptedChatMessage = encryptedChatMessageRepo.create({
-          type: payload.type,
-          chatId: payload.chatId,
-          chatMessageId: chatMessage.id,
-          recipientId: textPayload.recepientId,
-          text: textPayload.text,
-          createdAt: now,
-        })
-        await encryptedChatMessageRepo.save(encryptedChatMessage)
       }
+
+      await Promise.all([
+        // Update last message in the char
+        chatRepo.update(payload.chatId, {
+          lastMessageId: chatMessage.id,
+        }),
+        // Increment unread message count for all members except the sender
+        chatMemberRepo.update(
+          {
+            chatId: payload.chatId,
+            userId: In(
+              chatMembers
+                .filter((cm) => cm.userId !== payload.senderId && cm.status === 'member')
+                .map((cm) => cm.userId),
+            ),
+          },
+          {
+            unreadMessageCount: () => 'unread_message_count + 1',
+          },
+        ),
+      ])
 
       return chatMessage
     })
@@ -351,13 +349,11 @@ export class ChatService {
     return await AppDataSource.transaction(async (tx) => {
       const chatMemberRepo = tx.getRepository(ChatMember)
       const chatMessageRepo = tx.getRepository(ChatMessage)
-      const encryptedChatMessageRepo = tx.getRepository(EncryptedChatMessage)
 
       const chatMembers = await chatMemberRepo.find({
         select: ['id', 'userId', 'status'],
         where: {
           chatId: payload.chatId,
-          userId: In(payload.text.map((t) => t.recepientId)),
         },
       })
 
@@ -385,33 +381,19 @@ export class ChatService {
         throw new Error('Message is too old to edit')
       }
 
-      await chatMessageRepo.update(payload.messageId, {
-        editedAt: new Date(),
-      })
-
-      const recepientIdToTextPayload = new Map(payload.text.map((t) => [t.recepientId, t]))
-
-      for (const chatMember of chatMembers) {
-        if (chatMember.status !== 'member') {
-          continue
-        }
-
-        const textPayload = recepientIdToTextPayload.get(chatMember.userId)
-        if (!textPayload) {
-          continue
-        }
-
-        await encryptedChatMessageRepo.update(
+      switch (payload.type) {
+        case 'text':
           {
-            chatId: payload.chatId,
-            chatMessageId: payload.messageId,
-            recipientId: textPayload.recepientId,
-          },
-          {
-            text: textPayload.text,
-            editedAt: new Date(),
-          },
-        )
+            await chatMessageRepo.update(payload.messageId, {
+              text: payload.text,
+              editedAt: new Date(),
+            })
+          }
+          break
+
+        default: {
+          throw new Error('Unsupported message type')
+        }
       }
 
       return chatMessage
@@ -473,6 +455,61 @@ export class ChatService {
       await tx.getRepository(Chat).update(payload.chatId, {
         lastMessageId: lastChatMessage?.id ?? null,
       })
+    })
+  }
+
+  static getChatMember = async (payload: ChatMemberGet) => {
+    const chatMember = await AppDataSource.getRepository(ChatMember).findOne({
+      where: {
+        chatId: payload.chatId,
+        userId: payload.userId,
+      },
+    })
+
+    if (!chatMember) {
+      throw new Error('User is not a member of the chat')
+    }
+
+    if (payload.consumeEncryptionKey) {
+      await AppDataSource.getRepository(ChatMember).update(
+        {
+          id: chatMember.id,
+          encryptionKey: Not(IsNull()),
+        },
+        {
+          encryptionKey: null,
+          encryptionKeyConsumedAt: new Date(),
+        },
+      )
+    }
+
+    return chatMember
+  }
+
+  static restoreChatMemberEncryptionKey = async (payload: ChatMemberRestoreEncryptionKey) => {
+    return await AppDataSource.transaction(async (tx) => {
+      const chatMemberRepo = tx.getRepository(ChatMember)
+
+      const chatMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          userId: payload.userId,
+        },
+      })
+      if (!chatMember) {
+        throw new Error('User is not a member of the chat')
+      }
+
+      await chatMemberRepo.update(
+        {
+          id: chatMember.id,
+        },
+        {
+          encryptionKey: payload.encryptionKey,
+          encryptionKeyConsumedAt: null,
+        },
+      )
     })
   }
 }

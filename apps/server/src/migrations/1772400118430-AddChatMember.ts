@@ -24,6 +24,11 @@ export class AddChatMember1772400118430 implements MigrationInterface {
             type: 'bigint',
           },
           {
+            name: 'encryption_key',
+            type: 'text',
+            isNullable: true,
+          },
+          {
             name: 'status',
             type: 'text',
           },
@@ -36,6 +41,11 @@ export class AddChatMember1772400118430 implements MigrationInterface {
             name: 'unread_message_count',
             type: 'integer',
             default: 0,
+          },
+          {
+            name: 'encryption_key_consumed_at',
+            type: 'timestamptz',
+            isNullable: true,
           },
           {
             name: 'created_at',

@@ -14,6 +14,9 @@ export class ChatMember {
   @Column({ type: 'bigint' })
   userId!: string
 
+  @Column({ type: 'text', nullable: true })
+  encryptionKey!: string | null
+
   @Column({ type: 'text' })
   status!: 'member' | 'left'
 
@@ -22,6 +25,9 @@ export class ChatMember {
 
   @Column({ type: 'integer', default: 0 })
   unreadMessageCount!: number
+
+  @Column({ type: 'timestamptz', nullable: true })
+  encryptionKeyConsumedAt!: Date | null
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date

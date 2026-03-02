@@ -42,7 +42,7 @@ const CreateChatMessageBaseSchema = z.object({
 
 export const CreateTextChatMessageSchema = CreateChatMessageBaseSchema.extend({
   type: z.literal('text'),
-  text: z.array(z.object({ recepientId: z.string(), text: z.string() })),
+  text: z.string(),
 })
 
 export const CreateChatMessageSchema = z.discriminatedUnion('type', [CreateTextChatMessageSchema])
@@ -78,7 +78,7 @@ const EditChatMessageBaseSchema = z.object({
 
 export const EditTextChatMessageSchema = EditChatMessageBaseSchema.extend({
   type: z.literal('text'),
-  text: z.array(z.object({ recepientId: z.string(), text: z.string() })),
+  text: z.string(),
 })
 
 export const EditChatMessageSchema = z.discriminatedUnion('type', [EditTextChatMessageSchema])
@@ -90,4 +90,25 @@ export const EditChatMessageSchema = z.discriminatedUnion('type', [EditTextChatM
 export const DeleteChatMessageParamsSchema = z.object({
   chatId: z.string(),
   messageId: z.string(),
+})
+
+/**
+ * Get Authorized Chat Member
+ */
+
+export const GetAuthorizedChatMemberSchema = z.object({
+  chatId: z.string(),
+})
+
+/**
+ * Restore Chat Member Encryption Key
+ */
+
+export const RestoreChatMemberEncryptionKeyParamsSchema = z.object({
+  chatId: z.string(),
+  memberId: z.string(),
+})
+
+export const RestoreChatMemberEncryptionKeyBodySchema = z.object({
+  encryptionKey: z.string(),
 })

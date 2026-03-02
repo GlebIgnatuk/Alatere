@@ -9,10 +9,6 @@ const main = async () => {
       SELECT ${DatabaseConfig.schema}.create_table_partition('chat_messages_h${i}', d::date)
       FROM generate_series(current_date, current_date + 30, interval '1 day') as d;
     `)
-    await AppDataSource.query(`
-      SELECT ${DatabaseConfig.schema}.create_table_partition('encrypted_chat_messages_h${i}', d::date)
-      FROM generate_series(current_date, current_date + 30, interval '1 day') as d;
-    `)
   }
 }
 

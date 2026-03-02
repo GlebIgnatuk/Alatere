@@ -1,8 +1,7 @@
 import { DatabaseConfig } from '@/config'
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { User } from './User'
 import { Chat } from './Chat'
-import { EncryptedChatMessage } from './EncryptedChatMessage'
 
 @Entity('chat_messages', { schema: DatabaseConfig.schema })
 export class ChatMessage {
@@ -28,6 +27,12 @@ export class ChatMessage {
   editedAt!: Date | null
 
   /**
+   * Text attributes
+   */
+  @Column({ type: 'text', nullable: true })
+  text!: string | null
+
+  /**
    * Relationships
    */
   @ManyToOne('Chat')
@@ -41,7 +46,4 @@ export class ChatMessage {
   @ManyToOne('ChatMessage', { nullable: true })
   @JoinColumn({ name: 'replied_to_message_id', referencedColumnName: 'id' })
   repliedToMessage!: ChatMessage | null
-
-  @OneToMany('EncryptedChatMessage', 'chatMessage')
-  encryptedMessages!: EncryptedChatMessage[]
 }

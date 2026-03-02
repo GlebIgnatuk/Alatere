@@ -9,6 +9,9 @@ import {
   DeleteChatSchema,
   EditChatMessageParamsSchema,
   EditChatMessageSchema,
+  GetAuthorizedChatMemberSchema,
+  RestoreChatMemberEncryptionKeyBodySchema,
+  RestoreChatMemberEncryptionKeyParamsSchema,
   SearchChatMessagesSchema,
 } from './Chat.schema'
 import { createOkResponse, createZodErrorResponse } from '@/utils/http/response'
@@ -167,6 +170,44 @@ export class ChatController {
       chatId: params.data.chatId,
       messageId: params.data.messageId,
       senderId: req.query.senderId as string,
+    })
+
+    return res.status(200).json(createOkResponse(null))
+  }
+
+  static getAuthorizedChatMember = async (req: Request, res: Response) => {
+    const params = GetAuthorizedChatMemberSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    const member = await ChatService.getChatMember({
+      // @todo jwt
+      chatId: params.data.chatId,
+      userId: req.query.senderId as string,
+      consumeEncryptionKey: true,
+    })
+
+    return res.status(200).json(createOkResponse(member))
+  }
+
+  static restoreChatMemberEncryptionKey = async (req: Request, res: Response) => {
+    const params = RestoreChatMemberEncryptionKeyParamsSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    const body = RestoreChatMemberEncryptionKeyBodySchema.safeParse(req.body)
+    if (!body.success) {
+      return res.status(422).json(createZodErrorResponse(body.error.issues))
+    }
+
+    await ChatService.restoreChatMemberEncryptionKey({
+      // @todo jwt
+      chatId: params.data.chatId,
+      userId: req.query.senderId as string,
+      memberId: params.data.memberId,
+      encryptionKey: body.data.encryptionKey,
     })
 
     return res.status(200).json(createOkResponse(null))
