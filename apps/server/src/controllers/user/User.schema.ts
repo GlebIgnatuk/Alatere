@@ -14,7 +14,11 @@ export const ExchangeUserActivationCodeSchema = z.object({
 
 export const CreateUserFromCodeSchema = z.object({
   code: z.string().min(1),
-  username: z.string().min(1),
+  username: z
+    .string()
+    .regex(/^[a-z0-9_]+$/i)
+    .min(3)
+    .max(20),
   password: z.string().min(1),
   publicKey: z.string().min(1),
 })
@@ -24,7 +28,11 @@ export const CreateUserFromCodeSchema = z.object({
  */
 
 export const SearchUsernamesSchema = z.object({
-  username: z.string().min(1),
+  username: z
+    .string()
+    .regex(/^[a-z0-9_]+$/i)
+    .min(3)
+    .max(20),
 })
 
 /**
@@ -34,4 +42,19 @@ export const SearchUsernamesSchema = z.object({
 export const UpdateMeSchema = z.object({
   password: z.string().min(1).optional(),
   publicKey: z.string().min(1).optional(),
+})
+
+/**
+ * Search Users
+ */
+
+export const SearchUsersSchema = z.object({
+  username: z
+    .string()
+    .regex(/^[a-z0-9_]+$/i)
+    .min(3)
+    .max(20)
+    .optional(),
+  page: z.coerce.number().min(1),
+  limit: z.coerce.number().min(1).max(100),
 })

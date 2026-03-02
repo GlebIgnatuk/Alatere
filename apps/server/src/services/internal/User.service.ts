@@ -4,6 +4,7 @@ import { AppDataSource } from '@/database/DataSource'
 import { User } from '@/entities/User'
 import { UserActivationCode } from '@/entities/UserActivationCode'
 import { EntityManager, IsNull, MoreThan } from 'typeorm'
+import { paginate } from '@/utils/db/pagination'
 
 export interface UserActivationCodeGenerate {
   expiresInSeconds: number
@@ -22,6 +23,13 @@ export interface UserUpdate {
 
   password?: string
   publicKey?: string
+}
+
+export interface UserSearch {
+  username?: string
+
+  page: number
+  limit: number
 }
 
 export class UserService {
@@ -143,5 +151,20 @@ export class UserService {
 
       return await userRepo.save(user)
     })
+  }
+
+  static async searchUsers(payload: UserSearch) {
+    const userRepo = AppDataSource.getRepository(User)
+
+    const [items, nOfItems] = await userRepo
+      .createQueryBuilder('user')
+      .where('user.username ilike :username', { username: `${payload.username}%` })
+      .andWhere('user.deletedAt IS NULL')
+      .orderBy('user.username', 'ASC')
+      .skip(payload.page * payload.limit)
+      .take(payload.limit)
+      .getManyAndCount()
+
+    return paginate(items, payload.page, payload.limit, nOfItems)
   }
 }

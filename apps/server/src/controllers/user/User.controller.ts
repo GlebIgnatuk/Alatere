@@ -3,6 +3,7 @@ import {
   CreateUserFromCodeSchema,
   ExchangeUserActivationCodeSchema,
   SearchUsernamesSchema,
+  SearchUsersSchema,
   UpdateMeSchema,
 } from './User.schema'
 import { createNotFoundError, createOkResponse, createZodErrorResponse } from '@/utils/http/response'
@@ -89,5 +90,20 @@ export class UserController {
         publicKey: user.publicKey,
       }),
     )
+  }
+
+  static searchUsers = async (req: Request, res: Response) => {
+    const query = SearchUsersSchema.safeParse(req.query)
+    if (!query.success) {
+      return res.status(422).json(createZodErrorResponse(query.error.issues))
+    }
+
+    const users = await UserService.searchUsers({
+      username: query.data.username,
+      page: Math.max(query.data.page, 1) - 1,
+      limit: query.data.limit,
+    })
+
+    return res.status(200).json(createOkResponse(users))
   }
 }
