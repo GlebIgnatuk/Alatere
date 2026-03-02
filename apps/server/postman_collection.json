@@ -44,7 +44,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"code\": \"W19qRxhsEzxPXAONEtsrKCZ3_sxPw2E_gD43oo_XKzwS28SzZMybKmw0w6TBglEni1CGTRc-nw2ymIHlkIaoEg\",\n\n    \"username\": \"alatere\",\n    \"password\": \"1234567890\",\n    \"publicKey\": \"mypublickey\"\n}",
+              "raw": "{\n    \"code\": \"2poT5LsPE8XNPe4jrfs-NDdHvHu0RhZYUNeVbYFKVSeuxLpA9H3TPixojMuF0BK4VVehBOHDQuhs6LGZ5n5W5A\",\n\n    \"username\": \"alatere\",\n    \"password\": \"1234567890\",\n    \"publicKey\": \"mypublickey\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -59,6 +59,44 @@
               "path": [
                 "v1",
                 "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update authorized user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"password\": \"1234567890\",\n    \"publicKey\": \"mypublickey\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/users/me",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "me"
               ]
             }
           },
@@ -100,6 +138,231 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Get authorized user",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"lSmpGwWa5IQXXXXp77GPvoIkfDFOvbHNtT0N1ShTLxRP7BsDQZf1s-0t5vLns1Lj4fJ6XRGI__kwj4K_IUfiwA\",\n\n    \"username\": \"alatere\",\n    \"password\": \"1234567890\",\n    \"publicKey\": \"mypublickey\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/users/me",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/users?username=oka&page=1&limit=100",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "oka"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search my contacts",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"lSmpGwWa5IQXXXXp77GPvoIkfDFOvbHNtT0N1ShTLxRP7BsDQZf1s-0t5vLns1Lj4fJ6XRGI__kwj4K_IUfiwA\",\n\n    \"username\": \"alatere\",\n    \"password\": \"1234567890\",\n    \"publicKey\": \"mypublickey\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/users/me/contacts?page=1&limit=10",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "me",
+                "contacts"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "kab",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add contact",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contactId\": \"4\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/users/me/contacts",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "me",
+                "contacts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete contact",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contactId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/users/me/contacts/:contactId",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "me",
+                "contacts",
+                ":contactId"
+              ],
+              "variable": [
+                {
+                  "key": "contactId",
+                  "value": "4"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -109,11 +372,21 @@
         {
           "name": "Create chat",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"type\": \"private\",\n    \"ownerId\": \"1\",\n    \"peerId\": \"1\"\n}",
+              "raw": "{\n    \"type\": \"private\",\n    \"peerId\": \"3\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -167,10 +440,20 @@
         {
           "name": "Search chats",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{URL}}/v1/chats?userId=1&page=1&limit=10",
+              "raw": "{{URL}}/v1/chats?page=1&limit=10",
               "host": [
                 "{{URL}}"
               ],
@@ -179,10 +462,6 @@
                 "chats"
               ],
               "query": [
-                {
-                  "key": "userId",
-                  "value": "1"
-                },
                 {
                   "key": "page",
                   "value": "1"
@@ -199,10 +478,20 @@
         {
           "name": "Delete chat",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{URL}}/v1/chats/:chatId?ownerId=1",
+              "raw": "{{URL}}/v1/chats/:chatId",
               "host": [
                 "{{URL}}"
               ],
@@ -210,12 +499,6 @@
                 "v1",
                 "chats",
                 ":chatId"
-              ],
-              "query": [
-                {
-                  "key": "ownerId",
-                  "value": "1"
-                }
               ],
               "variable": [
                 {
@@ -230,11 +513,21 @@
         {
           "name": "Create message",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"type\": \"text\",\n    \"text\": [\n        { \"recepientId\": \"1\", \"text\": \"encryptedtext1\" },\n        { \"recepientId\": \"2\", \"text\": \"encryptedtext2\" },\n        { \"recepientId\": \"3\", \"text\": \"encryptedtext3\" }\n    ],\n    \"repliedToMessageId\": null,\n    \"senderId\": \"1\"\n}",
+              "raw": "{\n    \"type\": \"text\",\n    \"text\": \"ds8GU+GVY1aIieb2:yrxaEERGE/N3ZHBV:YaDxK4SP/dAVoZWb86zliA==\",\n    \"repliedToMessageId\": null\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -265,10 +558,20 @@
         {
           "name": "Search messages",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{URL}}/v1/chats/:chatId/messages?userId=1",
+              "raw": "{{URL}}/v1/chats/:chatId/messages",
               "host": [
                 "{{URL}}"
               ],
@@ -277,12 +580,6 @@
                 "chats",
                 ":chatId",
                 "messages"
-              ],
-              "query": [
-                {
-                  "key": "userId",
-                  "value": "1"
-                }
               ],
               "variable": [
                 {
@@ -297,11 +594,21 @@
         {
           "name": "Update message",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"type\": \"text\",\n    \"text\": [\n        { \"recepientId\": \"1\", \"text\": \"encryptedtext11\" },\n        { \"recepientId\": \"2\", \"text\": \"encryptedtext22\" }\n    ],\n    \"senderId\": \"1\"\n}",
+              "raw": "{\n    \"type\": \"text\",\n    \"text\": \"encryptedmessage2\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -337,10 +644,20 @@
         {
           "name": "Delete message",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{URL}}/v1/chats/:chatId/messages/:messageId?senderId=1",
+              "raw": "{{URL}}/v1/chats/:chatId/messages/:messageId",
               "host": [
                 "{{URL}}"
               ],
@@ -351,12 +668,6 @@
                 "messages",
                 ":messageId"
               ],
-              "query": [
-                {
-                  "key": "senderId",
-                  "value": "1"
-                }
-              ],
               "variable": [
                 {
                   "key": "chatId",
@@ -366,6 +677,290 @@
                   "key": "messageId",
                   "value": "8"
                 }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get authorized chat member",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/members/me",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "members",
+                "me"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restore member encryption key",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"encryptionKey\": \"mWzcVm6gfiiWQVT06qNB6zYGrIyPxMXqriPYkLBPBW049mMlmP8PqbPJeeqiTU20jqHRPJDT7iIQc37aOEYRdGF8TVIb/s9HwtlATiAKC4DtuT7YZamAOXUZbWad/+ygNwJWDD4L+OWoYgy2BEdap7ZZ0YswS0TLgD0CbIN8BtXX+q06iGUztRLh0563rjI7U7QQBVain/raPb/QM9YSYONGdqoEDRjCoHIc7YY9xPdhts+WquutKTfXrq7gbB7pPlG6rCunXQtMUR1tfs7su2X8JiXzpEn7CDWiClITVtKj/ByL4JRF6j6PQVqvX/fOWVqnFXK9Yl9vzx18r/8/aQ==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/members/:memberId/encryption-keys",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "members",
+                ":memberId",
+                "encryption-keys"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "1"
+                },
+                {
+                  "key": "memberId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset my encryption key",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"encryptionKey\": \"mWzcVm6gfiiWQVT06qNB6zYGrIyPxMXqriPYkLBPBW049mMlmP8PqbPJeeqiTU20jqHRPJDT7iIQc37aOEYRdGF8TVIb/s9HwtlATiAKC4DtuT7YZamAOXUZbWad/+ygNwJWDD4L+OWoYgy2BEdap7ZZ0YswS0TLgD0CbIN8BtXX+q06iGUztRLh0563rjI7U7QQBVain/raPb/QM9YSYONGdqoEDRjCoHIc7YY9xPdhts+WquutKTfXrq7gbB7pPlG6rCunXQtMUR1tfs7su2X8JiXzpEn7CDWiClITVtKj/ByL4JRF6j6PQVqvX/fOWVqnFXK9Yl9vzx18r/8/aQ==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/members/me/encryption-key-resets",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "members",
+                "me",
+                "encryption-key-resets"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List invalid chat members",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/invalid-members",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "invalid-members"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Kick chat member from group",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/members/:memberId/kicks",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "members",
+                ":memberId",
+                "kicks"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "1"
+                },
+                {
+                  "key": "memberId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Leave from group chat",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/members/me/leaves",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "members",
+                "me",
+                "leaves"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"alatere\",\n    \"password\": \"alatere\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/auth/logins",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "auth",
+                "logins"
               ]
             }
           },
