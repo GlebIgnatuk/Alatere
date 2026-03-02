@@ -5,6 +5,7 @@ import { HealthRouter } from './Health.router'
 import { IndexRouter } from './Index.router'
 import { UserRouter } from './User.router'
 import { ChatRouter } from './Chat.router'
+import { AuthRouter } from './Auth.router'
 
 const router = Router()
 
@@ -16,6 +17,6 @@ router.get('/', (_, res, next) => {
   }
 })
 
-router.use(ApplicationConfig.basePath, IndexRouter, HealthRouter, UserRouter, ChatRouter)
+router.use(ApplicationConfig.basePath, IndexRouter, HealthRouter, UserRouter, ChatRouter, AuthRouter)
 
 export { router as AppRouter }

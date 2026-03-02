@@ -4,7 +4,7 @@ import { ApplicationConfig } from '@/config'
 import { ApiError } from '@/utils/http/response'
 
 export interface DecodedJwtPayload {
-  id: number
+  sub: string
 }
 
 export const jwtMiddleware = (req: Request, res: Response, next: NextFunction) => {

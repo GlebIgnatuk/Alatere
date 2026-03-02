@@ -28,7 +28,7 @@ export class AuthService {
       throw new Error('Invalid credentials')
     }
 
-    const accessToken = jwt.sign({ id: user.id }, ApplicationConfig.jwtSecret, { expiresIn: '15m' })
+    const accessToken = jwt.sign({ sub: user.id }, ApplicationConfig.jwtSecret, { expiresIn: '15m' })
 
     return {
       user,

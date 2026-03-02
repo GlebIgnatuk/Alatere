@@ -3,6 +3,7 @@ import { CreateUserFromCodeSchema, ExchangeUserActivationCodeSchema, SearchUsern
 import { createNotFoundError, createOkResponse, createZodErrorResponse } from '@/utils/http/response'
 import { UserService } from '@/services/internal/User.service'
 import { toCreatedUserFromCodeDto } from './User.dto'
+import { mustGetAuthenticatedUser } from '@/middlewares/jwt'
 
 export class UserController {
   static exchangeUserActivationCode = async (req: Request, res: Response) => {
@@ -42,5 +43,23 @@ export class UserController {
     }
 
     return res.status(200).json(createOkResponse({ isTaken: false }))
+  }
+
+  static getAuthorizedUser = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const user = await UserService.findUserById(authenticatedUser.sub)
+
+    if (!user) {
+      return res.status(404).json(createNotFoundError())
+    }
+
+    return res.status(200).json(
+      createOkResponse({
+        id: user.id,
+        username: user.username,
+        publicKey: user.publicKey,
+      }),
+    )
   }
 }

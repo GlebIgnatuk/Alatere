@@ -7,13 +7,11 @@ import { z } from 'zod'
 export const CreatePrivateChatSchema = z.object({
   type: z.literal('private'),
   peerId: z.string(),
-  ownerId: z.string(),
 })
 
 export const CreateChatSchema = z.discriminatedUnion('type', [CreatePrivateChatSchema])
 
 export const ChatSearchSchema = z.object({
-  userId: z.string().optional(),
   page: z.coerce.number().min(0),
   limit: z.coerce.number().min(1),
 })
@@ -36,8 +34,6 @@ export const CreateChatMessageParamsSchema = z.object({
 
 const CreateChatMessageBaseSchema = z.object({
   repliedToMessageId: z.string().optional().nullable(),
-
-  senderId: z.string(),
 })
 
 export const CreateTextChatMessageSchema = CreateChatMessageBaseSchema.extend({
@@ -56,7 +52,6 @@ export const SearchChatMessagesSchema = z.object({
 })
 
 export const ChatMessageSearchSchema = z.object({
-  userId: z.string(),
   text: z.string().optional(),
   beforeTimestamp: z.coerce.date().optional(),
   afterTimestamp: z.coerce.date().optional(),
@@ -72,9 +67,7 @@ export const EditChatMessageParamsSchema = z.object({
   messageId: z.string(),
 })
 
-const EditChatMessageBaseSchema = z.object({
-  senderId: z.string(),
-})
+const EditChatMessageBaseSchema = z.object({})
 
 export const EditTextChatMessageSchema = EditChatMessageBaseSchema.extend({
   type: z.literal('text'),
