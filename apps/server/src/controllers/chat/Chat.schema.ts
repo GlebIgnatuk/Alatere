@@ -165,3 +165,15 @@ export const AddUserToGroupChatBodySchema = z.object({
 export const ListGroupChatMembersParamsSchema = z.object({
   chatId: z.string(),
 })
+
+/**
+ * Mark Messages as Read
+ */
+
+export const MarkMessagesAsReadParamsSchema = z.object({
+  chatId: z.string(),
+})
+
+export const MarkMessagesAsReadBodySchema = z.object({
+  lastReadMessageTimestamp: z.coerce.date(),
+})

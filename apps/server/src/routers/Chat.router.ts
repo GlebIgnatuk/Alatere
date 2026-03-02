@@ -23,5 +23,6 @@ router.post('/v1/chats/:chatId/members/:memberId/kicks', jwtMiddleware, ChatCont
 router.post('/v1/chats/:chatId/members/me/leaves', jwtMiddleware, ChatController.leaveFromGroupChat)
 router.post('/v1/chats/:chatId/members', jwtMiddleware, ChatController.addUserToGroupChat)
 router.get('/v1/chats/:chatId/members', jwtMiddleware, ChatController.listGroupChatMembers)
+router.post('/v1/chats/:chatId/message-reads', jwtMiddleware, ChatController.markMessagesAsRead)
 
 export { router as ChatRouter }

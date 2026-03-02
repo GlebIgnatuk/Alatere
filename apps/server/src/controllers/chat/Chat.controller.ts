@@ -16,6 +16,8 @@ import {
   LeaveGroupChatParamsSchema,
   ListChatMembersWithInvalidPublicKeySchema,
   ListGroupChatMembersParamsSchema,
+  MarkMessagesAsReadBodySchema,
+  MarkMessagesAsReadParamsSchema,
   ResetMyEncryptionKeyParamsSchema,
   RestoreChatMemberEncryptionKeyBodySchema,
   RestoreChatMemberEncryptionKeyParamsSchema,
@@ -354,5 +356,27 @@ export class ChatController {
     })
 
     return res.status(200).json(createOkResponse(members))
+  }
+
+  static markMessagesAsRead = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = MarkMessagesAsReadParamsSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    const body = MarkMessagesAsReadBodySchema.safeParse(req.body)
+    if (!body.success) {
+      return res.status(422).json(createZodErrorResponse(body.error.issues))
+    }
+
+    await ChatService.markMessagesAsRead({
+      chatId: params.data.chatId,
+      userId: authenticatedUser.sub,
+      lastReadMessageTimestamp: body.data.lastReadMessageTimestamp,
+    })
+
+    return res.status(200).json(createOkResponse(null))
   }
 }

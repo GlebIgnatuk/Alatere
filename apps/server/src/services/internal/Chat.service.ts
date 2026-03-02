@@ -6,7 +6,7 @@ import { User } from '@/entities/User'
 import { encryptAssymmetric } from '@/utils/crypto/asymmetric'
 import { generateSymmetricKey } from '@/utils/crypto/symmetric'
 import { paginate, paginateWithCursor } from '@/utils/db/pagination'
-import { In, IsNull, Not } from 'typeorm'
+import { In, IsNull, MoreThan, Not } from 'typeorm'
 
 /**
  * Chat
@@ -123,6 +123,12 @@ export interface ChatMemberAdd {
 export interface ChatMemberList {
   chatId: string
   userId: string
+}
+
+export interface ChatMessageRead {
+  chatId: string
+  userId: string
+  lastReadMessageTimestamp: Date
 }
 
 export class ChatService {
@@ -906,5 +912,40 @@ export class ChatService {
     })
 
     return members
+  }
+
+  static markMessagesAsRead = async (payload: ChatMessageRead) => {
+    return await AppDataSource.transaction(async (tx) => {
+      const chatMemberRepo = tx.getRepository(ChatMember)
+
+      const chatMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          userId: payload.userId,
+          status: 'member',
+        },
+      })
+      if (!chatMember) {
+        throw new Error('User is not a member of the chat')
+      }
+
+      const unreadCount = await tx.getRepository(ChatMessage).count({
+        where: {
+          chatId: payload.chatId,
+          createdAt: MoreThan(payload.lastReadMessageTimestamp),
+        },
+      })
+
+      await chatMemberRepo.update(
+        {
+          id: chatMember.id,
+        },
+        {
+          lastReadMessageTimestamp: payload.lastReadMessageTimestamp,
+          unreadMessageCount: unreadCount,
+        },
+      )
+    })
   }
 }
