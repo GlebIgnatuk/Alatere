@@ -31,6 +31,12 @@ export class Chat {
   lookupKey!: string
 
   /**
+   * Group chat
+   */
+  @Column({ type: 'text', nullable: true })
+  name!: string | null
+
+  /**
    * Relationships
    */
   @ManyToOne('ChatMessage', { nullable: true })

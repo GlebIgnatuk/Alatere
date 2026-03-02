@@ -43,6 +43,11 @@ export class AddChat1772397789721 implements MigrationInterface {
             type: 'text',
             isNullable: true,
           },
+          {
+            name: 'name',
+            type: 'text',
+            isNullable: true,
+          },
         ],
         foreignKeys: [
           {

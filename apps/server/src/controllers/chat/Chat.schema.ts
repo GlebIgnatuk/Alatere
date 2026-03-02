@@ -9,7 +9,13 @@ export const CreatePrivateChatSchema = z.object({
   peerId: z.string(),
 })
 
-export const CreateChatSchema = z.discriminatedUnion('type', [CreatePrivateChatSchema])
+export const CreateGroupChatSchema = z.object({
+  type: z.literal('group'),
+  name: z.string().min(1),
+  peerIds: z.array(z.string()).min(1).max(10),
+})
+
+export const CreateChatSchema = z.discriminatedUnion('type', [CreatePrivateChatSchema, CreateGroupChatSchema])
 
 export const ChatSearchSchema = z.object({
   page: z.coerce.number().min(0),
@@ -136,5 +142,26 @@ export const KickChatMemberParamsSchema = z.object({
  */
 
 export const LeaveGroupChatParamsSchema = z.object({
+  chatId: z.string(),
+})
+
+/**
+ * Add User to Group Chat
+ */
+
+export const AddUserToGroupChatParamsSchema = z.object({
+  chatId: z.string(),
+})
+
+export const AddUserToGroupChatBodySchema = z.object({
+  peerId: z.string(),
+  encryptedKey: z.string(),
+})
+
+/**
+ * List Group Chat Members
+ */
+
+export const ListGroupChatMembersParamsSchema = z.object({
   chatId: z.string(),
 })

@@ -1,5 +1,7 @@
 import { Request, Response } from 'express'
 import {
+  AddUserToGroupChatBodySchema,
+  AddUserToGroupChatParamsSchema,
   ChatMessageSearchSchema,
   ChatSearchSchema,
   CreateChatMessageParamsSchema,
@@ -13,6 +15,7 @@ import {
   KickChatMemberParamsSchema,
   LeaveGroupChatParamsSchema,
   ListChatMembersWithInvalidPublicKeySchema,
+  ListGroupChatMembersParamsSchema,
   ResetMyEncryptionKeyParamsSchema,
   RestoreChatMemberEncryptionKeyBodySchema,
   RestoreChatMemberEncryptionKeyParamsSchema,
@@ -22,6 +25,7 @@ import { createOkResponse, createZodErrorResponse } from '@/utils/http/response'
 import { ChatService } from '@/services/internal/Chat.service'
 import { ChatMessage } from '@/entities/ChatMessage'
 import { mustGetAuthenticatedUser } from '@/middlewares/jwt'
+import { Chat } from '@/entities/Chat'
 
 export class ChatController {
   static createChat = async (req: Request, res: Response) => {
@@ -32,10 +36,31 @@ export class ChatController {
       return res.status(422).json(createZodErrorResponse(body.error.issues))
     }
 
-    const chat = await ChatService.createPrivateChat({
-      ownerId: authenticatedUser.sub,
-      peerId: body.data.peerId,
-    })
+    let chat: Chat
+    switch (body.data.type) {
+      case 'private':
+        {
+          chat = await ChatService.createPrivateChat({
+            ownerId: authenticatedUser.sub,
+            peerId: body.data.peerId,
+          })
+        }
+        break
+
+      case 'group':
+        {
+          chat = await ChatService.createGroupChat({
+            ownerId: authenticatedUser.sub,
+            name: body.data.name,
+            peerIds: body.data.peerIds,
+          })
+        }
+        break
+
+      default: {
+        throw new Error('unreachable')
+      }
+    }
 
     return res.status(200).json(createOkResponse(chat))
   }
@@ -290,5 +315,44 @@ export class ChatController {
     })
 
     return res.status(200).json(createOkResponse(null))
+  }
+
+  static addUserToGroupChat = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = AddUserToGroupChatParamsSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    const body = AddUserToGroupChatBodySchema.safeParse(req.body)
+    if (!body.success) {
+      return res.status(422).json(createZodErrorResponse(body.error.issues))
+    }
+
+    await ChatService.addUserToGroupChat({
+      chatId: params.data.chatId,
+      userId: authenticatedUser.sub,
+      peerId: body.data.peerId,
+      encryptedKey: body.data.encryptedKey,
+    })
+
+    return res.status(200).json(createOkResponse(null))
+  }
+
+  static listGroupChatMembers = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = ListGroupChatMembersParamsSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    const members = await ChatService.listGroupChatMembers({
+      chatId: params.data.chatId,
+      userId: authenticatedUser.sub,
+    })
+
+    return res.status(200).json(createOkResponse(members))
   }
 }

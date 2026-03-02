@@ -9,7 +9,7 @@ export class ChatMessage {
   id!: string
 
   @Column({ type: 'text' })
-  type!: 'text'
+  type!: 'text' | 'chat_created'
 
   @Column({ type: 'bigint' })
   chatId!: string

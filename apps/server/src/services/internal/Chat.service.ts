@@ -6,7 +6,7 @@ import { User } from '@/entities/User'
 import { encryptAssymmetric } from '@/utils/crypto/asymmetric'
 import { generateSymmetricKey } from '@/utils/crypto/symmetric'
 import { paginate, paginateWithCursor } from '@/utils/db/pagination'
-import { EntityManager, In, IsNull, Not } from 'typeorm'
+import { In, IsNull, Not } from 'typeorm'
 
 /**
  * Chat
@@ -107,6 +107,24 @@ export interface ChatMemberLeave {
   userId: string
 }
 
+export interface GroupChatCreate {
+  ownerId: string
+  name: string
+  peerIds: string[]
+}
+
+export interface ChatMemberAdd {
+  chatId: string
+  userId: string
+  peerId: string
+  encryptedKey: string
+}
+
+export interface ChatMemberList {
+  chatId: string
+  userId: string
+}
+
 export class ChatService {
   private static validateSenderMemberOrThrow = (member?: ChatMember | null) => {
     if (!member) {
@@ -128,78 +146,130 @@ export class ChatService {
     return member
   }
 
-  static createPrivateChatTx = async (payload: PrivateChatCreate, tx: EntityManager) => {
-    const chatRepo = tx.getRepository(Chat)
-    const chatMemberRepo = tx.getRepository(ChatMember)
-
-    const lookupKey = `${payload.ownerId}:${payload.peerId}`
-
-    const existingChat = await chatRepo.findOne({
-      where: {
-        type: 'private',
-        lookupKey,
-      },
-    })
-    if (existingChat) {
-      return existingChat
-    }
-
-    const chat = chatRepo.create({
-      type: 'private',
-      createdById: payload.ownerId,
-      lookupKey,
-    })
-    await chatRepo.save(chat)
-
-    const symmetricKey = generateSymmetricKey()
-
-    const [ownerUser, peerUser] = await Promise.all([
-      tx.getRepository(User).findOne({
-        where: {
-          id: payload.ownerId,
-        },
-      }),
-      tx.getRepository(User).findOne({
-        where: {
-          id: payload.peerId,
-        },
-      }),
-    ])
-
-    if (!ownerUser) {
-      throw new Error('Owner user not found')
-    }
-    if (!peerUser) {
-      throw new Error('Peer user not found')
-    }
-
-    await Promise.all([
-      chatMemberRepo.save(
-        chatMemberRepo.create({
-          chatId: chat.id,
-          userId: ownerUser.id,
-          publicKey: ownerUser.publicKey,
-          status: 'member',
-          encryptedKey: encryptAssymmetric(symmetricKey, ownerUser.publicKey),
-        }),
-      ),
-      chatMemberRepo.save(
-        chatMemberRepo.create({
-          chatId: chat.id,
-          userId: peerUser.id,
-          publicKey: peerUser.publicKey,
-          status: 'member',
-          encryptedKey: encryptAssymmetric(symmetricKey, peerUser.publicKey),
-        }),
-      ),
-    ])
-
-    return chat
-  }
-
   static createPrivateChat = async (payload: PrivateChatCreate) => {
     return await AppDataSource.transaction(async (tx) => {
-      return await this.createPrivateChatTx(payload, tx)
+      const chatRepo = tx.getRepository(Chat)
+      const chatMemberRepo = tx.getRepository(ChatMember)
+
+      const lookupKey = `${payload.ownerId}:${payload.peerId}`
+
+      const existingChat = await chatRepo.findOne({
+        where: {
+          type: 'private',
+          lookupKey,
+        },
+      })
+      if (existingChat) {
+        return existingChat
+      }
+
+      const chat = chatRepo.create({
+        type: 'private',
+        createdById: payload.ownerId,
+        lookupKey,
+      })
+      await chatRepo.save(chat)
+
+      const symmetricKey = generateSymmetricKey()
+
+      const [ownerUser, peerUser] = await Promise.all([
+        tx.getRepository(User).findOne({
+          where: {
+            id: payload.ownerId,
+          },
+        }),
+        tx.getRepository(User).findOne({
+          where: {
+            id: payload.peerId,
+          },
+        }),
+      ])
+
+      if (!ownerUser) {
+        throw new Error('Owner user not found')
+      }
+      if (!peerUser) {
+        throw new Error('Peer user not found')
+      }
+
+      await Promise.all([
+        chatMemberRepo.save(
+          chatMemberRepo.create({
+            chatId: chat.id,
+            userId: ownerUser.id,
+            publicKey: ownerUser.publicKey,
+            status: 'member',
+            encryptedKey: encryptAssymmetric(symmetricKey, ownerUser.publicKey),
+          }),
+        ),
+        chatMemberRepo.save(
+          chatMemberRepo.create({
+            chatId: chat.id,
+            userId: peerUser.id,
+            publicKey: peerUser.publicKey,
+            status: 'member',
+            encryptedKey: encryptAssymmetric(symmetricKey, peerUser.publicKey),
+          }),
+        ),
+      ])
+
+      return chat
+    })
+  }
+
+  static createGroupChat = async (payload: GroupChatCreate) => {
+    return await AppDataSource.transaction(async (tx) => {
+      const chatRepo = tx.getRepository(Chat)
+      const chatMemberRepo = tx.getRepository(ChatMember)
+      const chatMessageRepo = tx.getRepository(ChatMessage)
+
+      const chat = chatRepo.create({
+        type: 'group',
+        createdById: payload.ownerId,
+        name: payload.name,
+      })
+      await chatRepo.save(chat)
+
+      const chatMessage = await chatMessageRepo.save(
+        chatMessageRepo.create({
+          type: 'chat_created',
+          chatId: chat.id,
+          senderId: payload.ownerId,
+          createdAt: new Date(),
+        }),
+      )
+
+      await tx.getRepository(Chat).update(chat.id, {
+        lastMessageId: chatMessage.id,
+      })
+
+      const symmetricKey = generateSymmetricKey()
+
+      const users = await tx.getRepository(User).find({
+        where: {
+          id: In([payload.ownerId, ...payload.peerIds]),
+        },
+      })
+      if (users.length !== payload.peerIds.length + 1) {
+        throw new Error('One or more users not found')
+      }
+
+      await Promise.all(
+        users.map((user) =>
+          chatMemberRepo.save(
+            chatMemberRepo.create({
+              chatId: chat.id,
+              userId: user.id,
+              publicKey: user.publicKey,
+              status: 'member',
+              encryptedKey: encryptAssymmetric(symmetricKey, user.publicKey),
+              unreadMessageCount: 1,
+            }),
+          ),
+        ),
+      )
+
+      return chat
     })
   }
 
@@ -227,7 +297,7 @@ export class ChatService {
       qb.andWhere('(peerUser.id IS NULL OR peerUser.username ilike :name)', { name: `%${payload.name}%` })
 
       // Group chats
-      qb.orWhere('chat.name ilike :name', { name: `%${payload.name}%` })
+      qb.andWhere('(peerUser.id IS NOT NULL OR chat.name ilike :name)', { name: `%${payload.name}%` })
     }
 
     qb.orderBy('lastMessage.createdAt', 'DESC', 'NULLS LAST')
@@ -659,6 +729,7 @@ export class ChatService {
         where: {
           chatId: payload.chatId,
           userId: payload.userId,
+          status: 'member',
         },
       })
       if (!chatMember) {
@@ -686,6 +757,10 @@ export class ChatService {
 
       if (targetMember.status !== 'member') {
         throw new Error('Member is not a member of the chat')
+      }
+
+      if (targetMember.userId === chat.createdById) {
+        throw new Error('Cannot kick chat owner')
       }
 
       await chatMemberRepo.update(
@@ -735,5 +810,101 @@ export class ChatService {
         },
       )
     })
+  }
+
+  static addUserToGroupChat = async (payload: ChatMemberAdd) => {
+    return await AppDataSource.transaction(async (tx) => {
+      const chatMemberRepo = tx.getRepository(ChatMember)
+
+      const chat = await tx.getRepository(Chat).findOne({
+        select: ['id', 'type'],
+        where: {
+          id: payload.chatId,
+          type: 'group',
+        },
+      })
+      if (!chat) {
+        throw new Error('Chat not found')
+      }
+
+      const chatMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          userId: payload.userId,
+          status: 'member',
+        },
+      })
+      if (!chatMember) {
+        throw new Error('User is not a member of the chat')
+      }
+
+      const targetMember = await chatMemberRepo.findOne({
+        select: ['id', 'userId'],
+        where: {
+          chatId: payload.chatId,
+          userId: payload.peerId,
+        },
+      })
+      if (targetMember) {
+        throw new Error('User is already a member of the chat')
+      }
+
+      const peer = await tx.getRepository(User).findOne({
+        select: ['id', 'publicKey'],
+        where: {
+          id: payload.peerId,
+        },
+      })
+      if (!peer) {
+        throw new Error('Peer user not found')
+      }
+
+      await chatMemberRepo.save(
+        chatMemberRepo.create({
+          chatId: chat.id,
+          userId: peer.id,
+          publicKey: peer.publicKey,
+          status: 'member',
+          encryptedKey: payload.encryptedKey,
+        }),
+      )
+    })
+  }
+
+  static listGroupChatMembers = async (payload: ChatMemberList) => {
+    const chatMemberRepo = AppDataSource.getRepository(ChatMember)
+
+    const chat = await AppDataSource.getRepository(Chat).findOne({
+      select: ['id', 'type'],
+      where: {
+        id: payload.chatId,
+        type: 'group',
+      },
+    })
+    if (!chat) {
+      throw new Error('Chat not found')
+    }
+
+    const chatMember = await chatMemberRepo.findOne({
+      select: ['id', 'userId'],
+      where: {
+        chatId: payload.chatId,
+        userId: payload.userId,
+        status: 'member',
+      },
+    })
+    if (!chatMember) {
+      throw new Error('User is not a member of the chat')
+    }
+
+    const members = await chatMemberRepo.find({
+      where: {
+        chatId: payload.chatId,
+      },
+      relations: ['user'],
+    })
+
+    return members
   }
 }
