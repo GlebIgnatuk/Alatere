@@ -1,0 +1,45 @@
+{
+  "name": "@alatere/server",
+  "scripts": {
+    "exec:local": "cross-env DOTENV_CONFIG_PATH=./.env.local node -r dotenv/config",
+    "exec:script": "cross-env DOTENV_CONFIG_PATH=./.env.script node -r dotenv/config",
+    "start:local": "pnpm exec:local ./dist/src/server.js",
+    "dev": "nodemon",
+    "build": "swc ./src --config-file .swcrc -d dist --copy-files --delete-dir-on-start",
+    "build:release": "pnpm run build && cp package.json pnpm-lock.yaml .env.dev .env.prod dist",
+    "migration:create": "typeorm migration:create"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "src/firebase-entrypoint.js",
+  "packageManager": "pnpm@10.15.1",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^4.0.0",
+    "argon2": "^0.44.0",
+    "express": "^5.1.0",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.27",
+    "typeorm-naming-strategies": "^4.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.7.9",
+    "@swc/core": "^1.15.2",
+    "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.19.1",
+    "@types/pg": "^8.15.6",
+    "@types/request": "2.48.13",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.2.3",
+    "firebase-functions-test": "^3.1.0",
+    "nodemon": "^3.1.11",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}

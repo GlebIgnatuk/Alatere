@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "dev": "loyal-manifest-406814",
+    "prod": "loyal-manifest-406814",
+    "default": "loyal-manifest-406814"
+  }
+}

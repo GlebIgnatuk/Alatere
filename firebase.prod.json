@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json",
+  "functions": [
+    {
+      "source": "apps/server/dist",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": ["firebase-debug.log", "firebase-debug.*.log", ".env.*"],
+      "predeploy": ["cd apps/server && pnpm run build:release"]
+    }
+  ],
+  "hosting": {
+    "public": "apps/client/dist",
+    "site": "alatere",
+    "ignore": [],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "alatere_server-prod"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "predeploy": ["cd apps/client && pnpm run build"]
+  }
+}

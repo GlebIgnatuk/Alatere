@@ -1,0 +1,17 @@
+{
+  "name": "@alatere/root",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "firebase:dev": "firebase use dev && firebase -c firebase.dev.json",
+    "firebase:prod": "firebase use prod && firebase -c firebase.prod.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.1",
+  "devDependencies": {
+    "firebase-tools": "^14.25.0",
+    "rimraf": "^6.1.0"
+  }
+}

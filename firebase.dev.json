@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json",
+  "functions": [
+    {
+      "source": "apps/server/dist",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": ["firebase-debug.log", "firebase-debug.*.log", ".env.*"],
+      "predeploy": ["cd apps/server && pnpm run build:release"]
+    }
+  ],
+  "hosting": {
+    "public": "apps/client/dist",
+    "site": "tarrot-dev",
+    "ignore": [],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "tarrot_server-dev"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/api/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          }
+        ]
+      }
+    ],
+    "predeploy": ["cd apps/client && pnpm run build"]
+  }
+}
