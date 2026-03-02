@@ -1,7 +1,10 @@
 import { Request, Response } from 'express'
 import {
+  AddContactSchema,
   CreateUserFromCodeSchema,
   ExchangeUserActivationCodeSchema,
+  RemoveContactSchema,
+  SearchContactsSchema,
   SearchUsernamesSchema,
   SearchUsersSchema,
   UpdateMeSchema,
@@ -105,5 +108,55 @@ export class UserController {
     })
 
     return res.status(200).json(createOkResponse(users))
+  }
+
+  static addContact = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const body = AddContactSchema.safeParse(req.body)
+    if (!body.success) {
+      return res.status(422).json(createZodErrorResponse(body.error.issues))
+    }
+
+    await UserService.addToContacts({
+      callerUserId: authenticatedUser.sub,
+      contactId: body.data.contactId,
+    })
+
+    return res.status(200).json(createOkResponse(null))
+  }
+
+  static removeContact = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const params = RemoveContactSchema.safeParse(req.params)
+    if (!params.success) {
+      return res.status(422).json(createZodErrorResponse(params.error.issues))
+    }
+
+    await UserService.removeFromContacts({
+      callerUserId: authenticatedUser.sub,
+      contactId: params.data.contactId,
+    })
+
+    return res.status(200).json(createOkResponse(null))
+  }
+
+  static searchContacts = async (req: Request, res: Response) => {
+    const authenticatedUser = mustGetAuthenticatedUser(res)
+
+    const query = SearchContactsSchema.safeParse(req.query)
+    if (!query.success) {
+      return res.status(422).json(createZodErrorResponse(query.error.issues))
+    }
+
+    const contacts = await UserService.searchContacts({
+      userId: authenticatedUser.sub,
+      username: query.data.username,
+      page: Math.max(query.data.page, 1) - 1,
+      limit: query.data.limit,
+    })
+
+    return res.status(200).json(createOkResponse(contacts))
   }
 }

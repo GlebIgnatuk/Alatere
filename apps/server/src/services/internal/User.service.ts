@@ -5,6 +5,7 @@ import { User } from '@/entities/User'
 import { UserActivationCode } from '@/entities/UserActivationCode'
 import { EntityManager, IsNull, MoreThan } from 'typeorm'
 import { paginate } from '@/utils/db/pagination'
+import { UserContact } from '@/entities/UserContact'
 
 export interface UserActivationCodeGenerate {
   expiresInSeconds: number
@@ -26,6 +27,24 @@ export interface UserUpdate {
 }
 
 export interface UserSearch {
+  username?: string
+
+  page: number
+  limit: number
+}
+
+export interface UserContactAdd {
+  callerUserId: string
+  contactId: string
+}
+
+export interface UserContactRemove {
+  callerUserId: string
+  contactId: string
+}
+
+export interface UserContactSearch {
+  userId: string
   username?: string
 
   page: number
@@ -166,5 +185,56 @@ export class UserService {
       .getManyAndCount()
 
     return paginate(items, payload.page, payload.limit, nOfItems)
+  }
+
+  static async addToContacts(payload: UserContactAdd) {
+    return await AppDataSource.transaction(async (tx) => {
+      const userContactRepo = tx.getRepository(UserContact)
+
+      await userContactRepo.save(
+        userContactRepo.create({
+          ownerId: payload.callerUserId,
+          contactId: payload.contactId,
+        }),
+      )
+    })
+  }
+
+  static async removeFromContacts(payload: UserContactRemove) {
+    return await AppDataSource.transaction(async (tx) => {
+      const userContactRepo = tx.getRepository(UserContact)
+
+      await userContactRepo.delete({
+        ownerId: payload.callerUserId,
+        contactId: payload.contactId,
+      })
+    })
+  }
+
+  static async searchContacts(payload: UserContactSearch) {
+    const userContactRepo = AppDataSource.getRepository(UserContact)
+
+    const qb = userContactRepo
+      .createQueryBuilder('userContact')
+      .innerJoinAndSelect('userContact.contact', 'contact')
+      .where('userContact.ownerId = :ownerId', { ownerId: payload.userId })
+
+    if (payload.username) {
+      qb.andWhere('contact.username ilike :username', { username: `%${payload.username}%` })
+    }
+
+    qb.andWhere('contact.deletedAt IS NULL')
+      .orderBy('contact.username', 'ASC')
+      .skip(payload.page * payload.limit)
+      .take(payload.limit)
+
+    const [items, nOfItems] = await qb.getManyAndCount()
+
+    return paginate(
+      items.map((i) => i.contact),
+      payload.page,
+      payload.limit,
+      nOfItems,
+    )
   }
 }

@@ -58,3 +58,34 @@ export const SearchUsersSchema = z.object({
   page: z.coerce.number().min(1),
   limit: z.coerce.number().min(1).max(100),
 })
+
+/**
+ * Add Contact
+ */
+
+export const AddContactSchema = z.object({
+  contactId: z.string().min(1),
+})
+
+/**
+ * Remove Contact
+ */
+
+export const RemoveContactSchema = z.object({
+  contactId: z.string().min(1),
+})
+
+/**
+ * Search Contacts
+ */
+
+export const SearchContactsSchema = z.object({
+  username: z
+    .string()
+    .regex(/^[a-z0-9_]+$/i)
+    .min(3)
+    .max(20)
+    .optional(),
+  page: z.coerce.number().min(1),
+  limit: z.coerce.number().min(1).max(100),
+})
