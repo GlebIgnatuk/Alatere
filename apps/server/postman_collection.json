@@ -1,0 +1,377 @@
+{
+  "info": {
+    "_postman_id": "960363d9-207b-4b2f-b696-064deec6e542",
+    "name": "Alatere",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "43296162"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Exchange activation code",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"lSmpGwWa5IQXXXXp77GPvoIkfDFOvbHNtT0N1ShTLxRP7BsDQZf1s-0t5vLns1Lj4fJ6XRGI__kwj4K_IUfiwA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/users/activation-code-exchanges",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users",
+                "activation-code-exchanges"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"W19qRxhsEzxPXAONEtsrKCZ3_sxPw2E_gD43oo_XKzwS28SzZMybKmw0w6TBglEni1CGTRc-nw2ymIHlkIaoEg\",\n\n    \"username\": \"alatere\",\n    \"password\": \"1234567890\",\n    \"publicKey\": \"mypublickey\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/users",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find username usage",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"lSmpGwWa5IQXXXXp77GPvoIkfDFOvbHNtT0N1ShTLxRP7BsDQZf1s-0t5vLns1Lj4fJ6XRGI__kwj4K_IUfiwA\",\n\n    \"username\": \"alatere\",\n    \"password\": \"1234567890\",\n    \"publicKey\": \"mypublickey\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/username-usages/:username",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "username-usages",
+                ":username"
+              ],
+              "variable": [
+                {
+                  "key": "username",
+                  "value": "alatere"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Create chat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"private\",\n    \"ownerId\": \"1\",\n    \"peerId\": \"1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/chats",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Create private chat",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"type\": \"private\",\n    \"peerId\": \"1\",\n    \"ownerId\": \"2\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/v1/chats",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "chats"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": null
+            }
+          ]
+        },
+        {
+          "name": "Search chats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats?userId=1&page=1&limit=10",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "1"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete chat",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId?ownerId=1",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId"
+              ],
+              "query": [
+                {
+                  "key": "ownerId",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"text\",\n    \"text\": [\n        { \"recepientId\": \"1\", \"text\": \"encryptedtext1\" },\n        { \"recepientId\": \"2\", \"text\": \"encryptedtext2\" },\n        { \"recepientId\": \"3\", \"text\": \"encryptedtext3\" }\n    ],\n    \"repliedToMessageId\": null,\n    \"senderId\": \"1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/messages",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "messages"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/messages?userId=1",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update message",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"text\",\n    \"text\": [\n        { \"recepientId\": \"1\", \"text\": \"encryptedtext11\" },\n        { \"recepientId\": \"2\", \"text\": \"encryptedtext22\" }\n    ],\n    \"senderId\": \"1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/messages/:messageId",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "messages",
+                ":messageId"
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "2"
+                },
+                {
+                  "key": "messageId",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete message",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/chats/:chatId/messages/:messageId?senderId=1",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "chats",
+                ":chatId",
+                "messages",
+                ":messageId"
+              ],
+              "query": [
+                {
+                  "key": "senderId",
+                  "value": "1"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "chatId",
+                  "value": "2"
+                },
+                {
+                  "key": "messageId",
+                  "value": "8"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
