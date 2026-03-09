@@ -1,50 +1,60 @@
 # alatere
 
+Alatere is a versatile platform designed to streamline server and client operations. This repository contains the source code for both backend and frontend components, along with deployment configurations.
+
+## Features
+
+- **Server Operations**: Scripts for user management, database partitioning, and more.
+- **Postman Integration**: Predefined Postman collections for API testing.
+- **Environment Configuration**: Flexible `.env` files for different environments.
+
 ## Prerequisites
 
 - pnpm
-- node 22
+- Node.js v22
 
-## Run Server
+## Project Structure
 
-Create `apps/server/.env.local`, use `apps/server/.env.example` as a reference.
+- **apps/server/**: Backend server code and scripts.
+- **apps/client/**: Frontend code (TODO).
 
-```console
-$ cd apps/server
-$ pnpm install
-$ pnpm run dev
-```
+## Getting Started
 
-### Postman collection
+### Run Server
 
-Import `apps/server/postman_collection.json` to Postman.
+1. Create `apps/server/.env.local` using `apps/server/.env.example` as a reference.
+2. Install dependencies and start the development server:
+   ```bash
+   cd apps/server
+   pnpm install
+   pnpm run dev
+   ```
 
-### Useful scripts
+### Useful Scripts
 
-Create `apps/server/.env.script` with needed environment variables, e.g. database connection url.
+1. Create `apps/server/.env.script` with the necessary environment variables (e.g., database connection URL).
 
-**Create user activation code**
+- **Create user activation code**:
+  ```bash
+  pnpm run exec:script ./dist/src/scripts/user/create-activation-code.js
+  ```
+- **Create users**:
+  ```bash
+  pnpm run exec:script ./dist/src/scripts/user/create-user.js
+  ```
+- **Create partitions**:
+  ```bash
+  pnpm run exec:script ./dist/src/scripts/db/create-chat-message-partitions.js
+  ```
 
-```console
-$ pnpm run exec:script ./dist/src/scripts/user/create-activation-code.js
-```
+### Postman Collection
 
-**Create users**
+Import `apps/server/postman_collection.json` into Postman for API testing.
 
-```console
-$ pnpm run exec:script ./dist/src/scripts/user/create-user.js
-```
+## Run Client
 
-**Create partitions**
-
-```console
-$ pnpm run exec:script ./dist/src/scripts/db/create-chat-message-partitions.js
-```
-
-## Run client
-
-TODO
+(TODO: Add instructions for running the client.)
 
 ## Deploy
 
-TODO
+(TODO: Add deployment instructions.)
